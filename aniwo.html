@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aniwo</title>
+  <style>
+    body {
+      background: #444;
+      font-family: 'Baloo Bhai 2', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav {
+      background: #333;
+      padding: 10px 20px;
+    }
+
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar h2 {
+      font-size: 28px;
+      color: #fff;
+      margin: 0;
+    }
+
+    /* Search bar */
+    .input-container {
+      position: relative;
+      width: 200px;
+    }
+
+    .input-container input {
+      font-size: 16px;
+      width: 100%;
+      border: none;
+      border-bottom: 2px solid #aaa;
+      padding: 5px 0;
+      background: transparent;
+      outline: none;
+      color: #fff;
+    }
+
+    .input-container .label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      color: #aaa;
+      transition: 0.3s;
+      pointer-events: none;
+    }
+
+    .input-container input:focus ~ .label,
+    .input-container input:valid ~ .label {
+      top: -18px;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .input-container .underline {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      width: 100%;
+      background: #fff;
+      transform: scaleX(0);
+      transition: 0.3s;
+    }
+
+    .input-container input:focus ~ .underline,
+    .input-container input:valid ~ .underline {
+      transform: scaleX(1);
+    }
+
+    /* Grid for cards */
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      justify-items: center;
+    }
+
+    .anime-card-wrapper {
+      position: relative;
+      text-align: center;
+    }
+
+    /* Card */
+    .anime-card {
+      width: 220px;
+      height: 300px;
+      background: #111;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .anime-card:hover {
+      transform: translateY(-8px) scale(1.04);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .anime-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Title below card */
+    .anime-card-info {
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .anime-card-info h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Detail Box */
+    .anime-detail-box {
+      position: absolute;
+      top: 0;
+      left: 100%;
+      margin-left: 15px;
+      width: 260px;
+      min-height: 300px;
+      background: #222;
+      color: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(20px);
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .anime-card-wrapper.show-detail .anime-detail-box {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="navbar">
+      <h2>Aniwo</h2>
+      <div class="input-container">
+        <input type="text" id="search" required>
+        <label for="search" class="label">Search</label>
+        <div class="underline"></div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="row" id="anime-list"></div>
+
+  <script>
+    const container = document.getElementById("anime-list");
+    const searchInput = document.getElementById("search");
+
+    // Render anime list
+    function displayAnime(list) {
+      container.innerHTML = "";
+
+      list.forEach(anime => {
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("anime-card-wrapper");
+
+        wrapper.innerHTML = `
+          <div class="anime-card">
+            <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
+          </div>
+          <div class="anime-card-info">
+            <h3>${anime.title}</h3>
+          </div>
+          <div class="anime-detail-box">
+            <h3>${anime.title}</h3>
+            <p><b>Score:</b> ⭐ ${anime.score ?? "N/A"}</p>
+            <p><b>Genres:</b> ${anime.genres.map(g => g.name).join(", ")}</p>
+            <p><b>Year:</b> ${anime.year ?? "?"}</p>
+            <p class="synopsis">${anime.synopsis ? anime.synopsis.slice(0, 200) + "..." : "No synopsis available."}</p>
+          </div>
+        `;
+
+        // Hover events
+        wrapper.addEventListener("mouseenter", () => {
+          wrapper.classList.add("show-detail");
+        });
+        wrapper.addEventListener("mouseleave", () => {
+          wrapper.classList.remove("show-detail");
+        });
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    // Fetch anime
+    async function fetchAnime(query = "") {
+      try {
+        let url;
+        if (query) {
+          url = `https://api.jikan.moe/v4/anime?q=${query}&limit=24`;
+        } else {
+          let randomPage = Math.floor(Math.random() * 30) + 1;
+          url = `https://api.jikan.moe/v4/top/anime?page=${randomPage}&limit=24`;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+        displayAnime(data.data);
+      } catch (err) {
+        console.error("Error:", err);
+      }
+    }
+
+    // Search input
+    searchInput.addEventListener("input", function () {
+      const query = this.value.trim();
+      if (query.length > 2) {
+        fetchAnime(query);
+      } else if (query.length === 0) {
+        fetchAnime();
+      }
+    });
+
+    // Enter key
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        fetchAnime(this.value.trim());
+      }
+    });
+
+    // Initial load
+    fetchAnime();
+  </script>
+</body>
+</html>
