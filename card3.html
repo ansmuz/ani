@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aniwo — fixed detail hover</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---------- base ---------- */
+    :root { --card-w: 220px; --detail-w: 320px; }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:#444;
+      font-family: "Baloo Bhai 2", sans-serif;
+      color:#fff;
+    }
+
+    /* navbar */
+    nav{ background:#333; padding:10px 20px; }
+    .navbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .navbar h2{ flex:1; text-align:center; margin:0; font-size:28px; letter-spacing:18px; text-transform:uppercase; color:#fff; }
+
+    /* search */
+    .input-container{ position:relative; width:220px; }
+    .input-container input{
+      width:100%; background:transparent; border:none; border-bottom:2px solid #aaa; padding:6px 4px; color:#fff; font-size:15px; outline:none;
+    }
+    .input-container .label{ position:absolute; left:0; top:0; color:#aaa; pointer-events:none; transition:all .25s; }
+    .input-container input:focus + .label,
+    .input-container input:not(:placeholder-shown) + .label{ transform:translateY(-20px); font-size:13px; color:#fff; }
+    .input-container .underline{ position:absolute; left:0; right:0; bottom:0; height:2px; transform:scaleX(0); background:#fff; transition:transform .25s; }
+    .input-container input:focus ~ .underline{ transform:scaleX(1); }
+
+    /* overlay (behind cards) */
+    .overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,0.65);
+      opacity:0;
+      pointer-events:none; /* overlay is behind cards, pointer on overlay works only outside cards */
+      transition:opacity .25s;
+      z-index:2; /* <-- IMPORTANT: behind cards (cards z-index > 2) */
+    }
+    .overlay.active{ opacity:1; pointer-events:auto; }
+
+    /* container grid (5 per row on wide screens) */
+    .row{
+      padding:20px;
+      display:grid;
+      justify-content:center;
+      gap:18px;
+      grid-template-columns: repeat(5, var(--card-w));
+    }
+    @media (max-width:1250px){ .row{ grid-template-columns: repeat(4, var(--card-w)); } }
+    @media (max-width:1000px){ .row{ grid-template-columns: repeat(3, var(--card-w)); } }
+    @media (max-width:700px){ .row{ grid-template-columns: repeat(2, var(--card-w)); } }
+    @media (max-width:420px){ .row{ grid-template-columns: repeat(1, minmax(180px,1fr)); } }
+
+    /* wrapper ensures card + detail + title are in same hover area */
+    .anime-card-wrapper{
+      position:relative;
+      width:var(--card-w);
+      z-index:4; /* above overlay */
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    /* card */
+    .anime-card{
+      width:100%;
+      height:300px;
+      overflow:hidden;
+      background:#111;
+      border-radius:6px;
+      box-shadow:0 6px 18px rgba(0,0,0,.45);
+      transition:transform .25s, box-shadow .25s;
+    }
+    .anime-card:hover{ transform:translateY(-6px) scale(1.02); box-shadow:0 18px 40px rgba(0,0,0,.6); }
+    .anime-img img{ width:100%; height:300px; object-fit:cover; display:block; transition:filter .35s, transform .35s; }
+    .anime-card:hover .anime-img img{ filter:blur(4px); transform:scale(1.04); }
+
+    /* title below card (completely separate element) */
+    .anime-card-info{ margin-top:10px; width:100%; text-align:center; }
+    .anime-card-info h3{ margin:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#fff; }
+
+    /* detail box (absolute inside wrapper) */
+    .anime-detail-box{
+      position:absolute;
+      top:0;
+      width:var(--detail-w);
+      min-height:300px;
+      background:linear-gradient(160deg,#141420 0%, #0d0d17 100%);
+      border-radius:10px;
+      padding:16px;
+      box-shadow:0 12px 36px rgba(0,0,0,.6);
+      opacity:0;
+      pointer-events:none;
+      transition:all .22s ease;
+      z-index:6; /* above cards */
+    }
+    /* placement: right or left relative to the card */
+    .anime-detail-box.right{ left: calc(100% + 14px); transform: translateX(12px); }
+    .anime-detail-box.left { right: calc(100% + 14px); transform: translateX(-12px); }
+
+    /* show */
+    .anime-card-wrapper.show-detail .anime-detail-box{
+      opacity:1;
+      pointer-events:auto;
+      transform:translateX(0);
+    }
+
+    /* inside detail */
+    .anime-detail-box .anime-name{ margin:0 0 8px; font-size:18px; font-weight:700; border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:8px; }
+    .score-badge{ display:inline-block; background:#f5c518; color:#000; padding:4px 8px; border-radius:18px; font-weight:700; margin:8px 0; font-size:13px; }
+    .genres{ margin:10px 0; }
+    .genres span{ display:inline-block; background:rgba(255,255,255,0.06); padding:4px 8px; border-radius:14px; margin-right:6px; font-size:12px; color:#eee; }
+    .year{ color:#bbb; margin-bottom:8px; font-size:13px; }
+    .synopsis{ color:#ddd; font-size:13px; line-height:1.4; max-height:220px; overflow:auto; }
+
+    /* small screens reduce detail width */
+    @media (max-width:700px){
+      :root{ --detail-w: 260px; }
+      .anime-detail-box.right{ left: calc(100% + 8px); }
+      .anime-detail-box.left { right: calc(100% + 8px); }
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="navbar">
+      <div class="input-container">
+        <input id="input" type="text" placeholder=" " />
+        <label class="label" for="input">Search</label>
+        <div class="underline"></div>
+      </div>
+      <h2>Aniwo</h2>
+    </div>
+  </nav>
+
+  <div id="overlay" class="overlay" aria-hidden="true"></div>
+  <div id="anime-container" class="row"></div>
+
+  <script>
+    const container = document.getElementById('anime-container');
+    const overlay = document.getElementById('overlay');
+    const searchInput = document.getElementById('input');
+
+    // debounce helper
+    function debounce(fn, ms=300){
+      let t;
+      return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+    }
+
+    // create single card wrapper (card + detail + title)
+    function makeCard(anime){
+      const wrapper = document.createElement('div');
+      wrapper.className = 'anime-card-wrapper';
+
+      // card
+      const card = document.createElement('div');
+      card.className = 'anime-card';
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'anime-img';
+      const img = document.createElement('img');
+      img.src = anime.images?.jpg?.image_url || '';
+      img.alt = anime.title || 'anime';
+      imgWrap.appendChild(img);
+      card.appendChild(imgWrap);
+
+      // detail
+      const detail = document.createElement('div');
+      detail.className = 'anime-detail-box right'; // default right, will be adjusted on enter
+      const genres = (anime.genres || []).map(g=>`<span>${g.name}</span>`).join(' ');
+      detail.innerHTML = `
+        <h3 class="anime-name">${anime.title || 'Unknown'}</h3>
+        <div class="score-badge">⭐ ${anime.score ?? 'N/A'}</div>
+        <div class="genres">${genres}</div>
+        <p class="year"><strong>Year:</strong> ${anime.year ?? '?'}</p>
+        <p class="synopsis">${anime.synopsis ? anime.synopsis.slice(0,300) + (anime.synopsis.length>300?'...':'') : 'No synopsis available.'}</p>
+      `;
+
+      // title box
+      const titleBox = document.createElement('div');
+      titleBox.className = 'anime-card-info';
+      titleBox.innerHTML = `<h3>${anime.title}</h3>`;
+
+      wrapper.appendChild(card);
+      wrapper.appendChild(detail);
+      wrapper.appendChild(titleBox);
+
+      // hover / pointer logic
+      function showDetail(){
+        // decide left / right based on viewport space
+        const rect = wrapper.getBoundingClientRect();
+        const dw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--detail-w')) || 320;
+        // small buffer
+        if (rect.right + dw + 40 > window.innerWidth) {
+          detail.classList.remove('right');
+          detail.classList.add('left');
+        } else {
+          detail.classList.remove('left');
+          detail.classList.add('right');
+        }
+
+        wrapper.classList.add('show-detail');
+        overlay.classList.add('active');
+      }
+
+      function hideDetail(){
+        wrapper.classList.remove('show-detail');
+        // if no other wrapper has show-detail, hide overlay
+        const any = document.querySelector('.anime-card-wrapper.show-detail');
+        if (!any) overlay.classList.remove('active');
+      }
+
+      // use pointer events for better touch/desktop behavior
+      wrapper.addEventListener('pointerenter', showDetail);
+      wrapper.addEventListener('pointerleave', hideDetail);
+
+      return wrapper;
+    }
+
+    // render list
+    function displayAnime(list){
+      container.innerHTML = '';
+      list.forEach(a => container.appendChild(makeCard(a)));
+    }
+
+    // fetch (search or top)
+    async function fetchAnime(query=''){
+      try{
+        container.innerHTML = '<p style="color:#ddd; padding:20px">Loading…</p>';
+        let url;
+        if (query && query.trim().length){
+          url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=24`;
+        } else {
+          const page = Math.floor(Math.random()*30) + 1;
+          url = `https://api.jikan.moe/v4/top/anime?page=${page}&limit=24`;
+        }
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('API returned '+res.status);
+        const data = await res.json();
+        if (!data || !data.data || !data.data.length){
+          container.innerHTML = '<p style="color:#ddd; padding:20px">No results.</p>';
+          return;
+        }
+        displayAnime(data.data);
+      }catch(e){
+        console.error(e);
+        container.innerHTML = `<p style="color:#f88; padding:20px">Error fetching data. Try again later.</p>`;
+      }
+    }
+
+    // overlay click closes all details
+    overlay.addEventListener('click', ()=>{
+      document.querySelectorAll('.anime-card-wrapper.show-detail').forEach(w=>w.classList.remove('show-detail'));
+      overlay.classList.remove('active');
+    });
+
+    // search handlers
+    const doSearch = debounce((q)=>{
+      if (!q || q.trim().length===0) fetchAnime();
+      else if (q.trim().length>2) fetchAnime(q.trim());
+    }, 350);
+
+    searchInput.addEventListener('input', (e)=> doSearch(e.target.value));
+    searchInput.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        fetchAnime(searchInput.value.trim());
+      }
+    });
+
+    // initial load
+    fetchAnime();
+
+    // helpful: close details on ESC
+    window.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape'){
+        document.querySelectorAll('.anime-card-wrapper.show-detail').forEach(w=>w.classList.remove('show-detail'));
+        overlay.classList.remove('active');
+      }
+    });
+
+  </script>
+</body>
+</html>
