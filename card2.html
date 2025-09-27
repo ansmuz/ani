@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aniwo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+
+
+<nav>
+  <div class="navbar">
+    <div class="input-container">
+      <input type="text" id="input" required="">
+      <label for="input" class="label">Search</label>
+      <div class="underline"></div>
+    </div>
+    <h2>Aniwo</h2>
+  </div>
+</nav>
+
+
+
+  <div class="row" id="anime-container"></div>
+
+  <script>
+    const container = document.getElementById("anime-container");
+
+    // 🔹 Fetch random anime page
+    async function fetchAnime() {
+      try {
+        let randomPage = Math.floor(Math.random() * 30) + 1; // 1 - 30
+        const res = await fetch(`https://api.jikan.moe/v4/top/anime?page=${randomPage}`);
+        const data = await res.json();
+
+        container.innerHTML = ""; // clear old
+
+        data.data.slice(0, 5).forEach(anime => { // sirf 5 anime dikhao
+          const card = document.createElement("div");
+          card.classList.add("anime-card");
+
+          card.innerHTML = `
+            <div class="anime-img">
+              <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
+            </div>
+          `;
+
+          const detail = document.createElement("div");
+          detail.classList.add("anime-detail-box");
+
+          // Genres list
+          const genres = anime.genres.map(g => `<span>${g.name}</span>`).join(" ");
+
+          detail.innerHTML = `
+            <h3 class="anime-name">${anime.title}</h3>
+            <div class="score-badge">⭐ ${anime.score ?? "N/A"}</div>
+            <div class="genres">${genres}</div>
+            <p class="year"><strong>Year:</strong> ${anime.year ?? "?"}</p>
+            <p class="synopsis">${anime.synopsis ? anime.synopsis.slice(0, 200) + "..." : "No synopsis available."}</p>
+            <h3 class="anime-name">${anime.title}</h3>
+          `;
+
+          container.appendChild(card);
+          container.appendChild(detail);
+        });
+      } catch (err) {
+        console.error("Error:", err);
+      }
+    }
+
+    // 🔹 Load anime on page start
+    fetchAnime();
+  </script>
+
+</body>
+
+</html>
+
