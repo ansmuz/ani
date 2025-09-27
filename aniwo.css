@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@400..800&display=swap');
+
+body {
+  box-sizing: border-box;
+  background: #444;
+  font-family: 'Baloo Bhai 2', sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+/* Navbar */
+nav {
+  background: #333;
+  padding: 10px 20px;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar h2 {
+  flex: 1;
+  text-align: center;
+  font-size: 32px;
+  color: #fff;
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 20px;
+}
+
+/* 🔽 Search Input Styles */
+.input-container {
+  position: relative;
+  width: 200px;
+}
+
+.input-container input[type="text"] {
+  font-size: 16px;
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #aaa;
+  padding: 5px 0;
+  background-color: transparent;
+  outline: none;
+  color: #fff;
+}
+
+.input-container .label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #aaa;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.input-container input[type="text"]:focus~.label,
+.input-container input[type="text"]:valid~.label {
+  top: -18px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.input-container .underline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background-color: #fff;
+  transform: scaleX(0);
+  transition: all 0.3s ease;
+}
+
+.input-container input[type="text"]:focus~.underline,
+.input-container input[type="text"]:valid~.underline {
+  transform: scaleX(1);
+}
+
+/* Grid layout */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  justify-items: center;
+}
+
+/* Card wrapper */
+.anime-card-wrapper {
+  position: relative;
+  text-align: center;
+}
+
+/* Card */
+.anime-card {
+  width: 220px;
+  height: 300px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #111;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.anime-card:hover {
+  transform: translateY(-8px) scale(1.04);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* Card Image */
+.anime-img img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.4s ease, transform 0.4s ease;
+}
+
+.anime-card:hover .anime-img img {
+  filter: blur(4px);
+  transform: scale(1.05);
+}
+
+/* Title below card */
+.anime-card-info {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.anime-card-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+/* Detail Box */
+.anime-detail-box {
+  position: absolute;
+  top: 0;
+  width: 260px;
+  min-height: 320px;
+  background: linear-gradient(160deg, #141420 0%, #0d0d17 100%);
+  color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.anime-card-wrapper.show-detail .anime-detail-box {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Position left/right */
+.anime-detail-box.left {
+  right: 100%;
+  margin-right: 20px;
+  transform: translateX(-20px);
+}
+
+.anime-detail-box.right {
+  left: 100%;
+  margin-left: 20px;
+  transform: translateX(20px);
+}
+
+.anime-card-wrapper.show-detail .anime-detail-box.left,
+.anime-card-wrapper.show-detail .anime-detail-box.right {
+  transform: translateX(0);
+}
+
+/* Inside detail box */
+.anime-detail-box .anime-name {
+  margin: 0 0 12px;
+  font-size: 20px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 6px;
+}
+
+.score-badge {
+  display: inline-block;
+  color: #fff;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  background: #f5c518;
+  color: #000;
+}
+
+.genres {
+  margin: 10px 0 15px;
+}
+
+.genres span {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  color: #eee;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  margin: 4px 4px 0 0;
+  transition: background 0.3s ease;
+}
+
+.genres span:hover {
+  background: #f5c518;
+  color: #000;
+}
+
+.year {
+  font-size: 13px;
+  color: #bbb;
+  margin-bottom: 12px;
+}
+
+.synopsis {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #ddd;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+}
+
+.overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
